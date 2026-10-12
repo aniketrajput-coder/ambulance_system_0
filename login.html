@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-[#070b14] text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PulseCare India | Private Emergency Ambulance Booking & Fleet Telemetry</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#fff1f2',
+              100: '#ffe4e6',
+              500: '#f43f5e',
+              600: '#e11d48',
+              700: '#be123c',
+            },
+            accent: {
+              cyan: '#06b6d4',
+              blue: '#3b82f6',
+              emerald: '#10b981',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts: Inter & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Leaflet CSS for Interactive Fleet Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="min-h-full flex flex-col font-sans bg-[#070b14] text-slate-100 selection:bg-rose-500 selection:text-white">
+
+  <!-- TOP MINIMAL CONTACT & ZONE BAR -->
+  <div class="bg-slate-900/90 border-b border-slate-800/80 px-4 sm:px-6 py-2 text-xs flex items-center justify-between text-slate-400">
+    <div class="flex items-center space-x-2">
+      <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+      <span class="text-slate-300 font-semibold hidden sm:inline">24/7 Priority Emergency Desk:</span>
+      <a href="tel:18002009110" class="text-rose-400 font-bold hover:underline font-mono text-xs sm:text-sm">+91 1800-200-9110</a>
+    </div>
+
+    <!-- Active City Switcher -->
+    <div class="flex items-center space-x-2">
+      <span class="text-[11px] text-slate-400 hidden sm:inline">Operating Hub:</span>
+      <select id="citySelector" class="bg-slate-800 border border-slate-700 hover:border-slate-600 text-white font-semibold text-xs rounded-lg px-2.5 py-1 focus:outline-none focus:ring-1 focus:ring-rose-500 cursor-pointer transition">
+        <option value="DELHI" selected>📍 Delhi NCR</option>
+        <option value="BLR">📍 Bengaluru</option>
+        <option value="MUM">📍 Mumbai</option>
+        <option value="HYD">📍 Hyderabad</option>
+        <option value="CCU">📍 Kolkata</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- CLEAN HEADER -->
+  <header class="sticky top-0 z-40 bg-[#090d16]/95 backdrop-blur-md border-b border-slate-800/90 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        
+        <!-- Brand Logo -->
+        <div class="flex items-center space-x-3 cursor-pointer" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-500 to-red-600 flex items-center justify-center shadow-lg shadow-rose-500/20 text-white font-bold text-xl">
+            ✚
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <span class="font-extrabold text-xl tracking-tight text-white">PulseCare</span>
+              <span class="px-2 py-0.5 text-[10px] font-bold rounded-md bg-rose-500/15 text-rose-400 border border-rose-500/30 uppercase tracking-wider">India Fleet</span>
+            </div>
+            <p class="text-[11px] text-slate-400 font-medium hidden sm:block">Private Critical Care & Mobile ICU Operations</p>
+          </div>
+        </div>
+
+        <!-- Officer Sign-In Button -->
+        <div class="flex items-center space-x-3">
+          <a href="login.html" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-700 hover:border-slate-600 text-xs font-bold transition flex items-center space-x-1.5 shadow-sm">
+            <span>🛡️</span>
+            <span>Officer Sign-In &rarr;</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN PATIENT CONTENT -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- CLEAN HERO BANNER WITH 1-CLICK SOS -->
+    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-[#141926] border border-slate-800/90 p-6 sm:p-7 shadow-xl">
+      <div class="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+        <div class="max-w-2xl space-y-1.5">
+          <div class="inline-flex items-center space-x-2 px-2.5 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[11px] font-semibold uppercase tracking-wider">
+            <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+            <span>Priority Fleet Network • <span id="heroCityName">Delhi NCR Hub</span></span>
+          </div>
+          <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+            Emergency Critical Care Ambulance Dispatch
+          </h1>
+          <p class="text-slate-400 text-xs sm:text-sm leading-relaxed">
+            Deployment of Advanced Life Support (ALS) mobile ICUs with Dräger ventilators, cardiac defibrillators, and emergency paramedics.
+          </p>
+        </div>
+
+        <!-- 1-Click Fast SOS Button -->
+        <div class="flex-shrink-0 w-full md:w-auto">
+          <button onclick="patientApp.triggerInstantSOS()" class="w-full md:w-auto group relative inline-flex items-center justify-center px-6 py-4 text-base font-bold text-white transition-all bg-gradient-to-r from-rose-600 via-red-600 to-rose-700 rounded-xl shadow-lg shadow-rose-600/25 hover:shadow-rose-600/40 hover:scale-[1.01] active:scale-[0.99] border border-rose-400/30 cursor-pointer">
+            <span class="mr-3 text-2xl animate-bounce">🚨</span>
+            <div class="text-left">
+              <div class="text-[10px] uppercase tracking-wider text-rose-200 font-bold">Life Threat / Cardiac?</div>
+              <div class="text-base font-black leading-tight">1-CLICK PRIORITY SOS</div>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN TWO-COLUMN WORKFLOW: BOOKING (LEFT) & LIVE TRACKER (RIGHT) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- LEFT COLUMN: STREAMLINED BOOKING FORM (5 Cols) -->
+      <div class="lg:col-span-5 space-y-6">
+        <div class="bg-slate-900/90 border border-slate-800/90 rounded-2xl p-5 sm:p-6 shadow-xl space-y-4">
+          <div class="border-b border-slate-800 pb-3">
+            <h2 class="text-base font-bold text-white flex items-center space-x-2">
+              <span class="text-rose-500">🚑</span>
+              <span>Book Ambulance</span>
+            </h2>
+            <p class="text-[11px] text-slate-400 mt-0.5">
+              Request is assigned immediately to our on-duty Dispatch Operations Officer.
+            </p>
+          </div>
+
+          <form id="emergencyBookingForm" class="space-y-3.5">
+            <!-- Hidden GPS Coords -->
+            <input type="hidden" id="pickupLat">
+            <input type="hidden" id="pickupLng">
+
+            <!-- Patient Name & Phone -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Patient Name *</label>
+                <input type="text" id="patientName" required placeholder="e.g. Ananya Roy" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 text-xs focus:outline-none focus:ring-1 focus:ring-rose-500 transition">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Emergency Mobile *</label>
+                <div class="flex">
+                  <span class="inline-flex items-center px-2.5 rounded-l-xl border border-r-0 border-slate-800 bg-slate-900 text-slate-400 text-xs font-mono">+91</span>
+                  <input type="tel" id="patientPhone" required pattern="[0-9]{10}" placeholder="10-digit number" class="w-full px-3 py-2 rounded-r-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-rose-500 transition">
+                </div>
+              </div>
+            </div>
+
+            <!-- Pickup Location with GPS Auto-Detect -->
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="text-xs font-semibold text-slate-300">Pickup Location *</label>
+                <button type="button" id="detectLocBtn" onclick="patientApp.detectLocation()" class="text-[11px] text-cyan-400 hover:text-cyan-300 font-semibold flex items-center space-x-1 cursor-pointer">
+                  <span>📍</span>
+                  <span>Locate Me</span>
+                </button>
+              </div>
+              <input type="text" id="pickupAddress" required placeholder="e.g. DLF Cyber City Tower 8, Gurugram" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 text-xs focus:outline-none focus:ring-1 focus:ring-rose-500 transition">
+            </div>
+
+            <!-- Destination Hospital -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Destination Hospital *</label>
+              <select id="destinationHospital" required class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:ring-1 focus:ring-rose-500 transition cursor-pointer">
+                <!-- Dynamically populated based on active city -->
+              </select>
+            </div>
+
+            <!-- Emergency Category -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Emergency Reason *</label>
+              <select id="emergencyType" required class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:ring-1 focus:ring-rose-500 transition cursor-pointer">
+                <option value="Cardiac Distress / Severe Chest Pain">🫀 Cardiac Distress / Chest Pain</option>
+                <option value="Acute Respiratory Distress / Low SpO2">🫁 Severe Breathing Difficulty / Low Oxygen</option>
+                <option value="Stroke / Neurological Paralysis">🧠 Acute Stroke / FAST Symptoms</option>
+                <option value="Major Road Trauma / Multiple Fractures">🚗 Major Trauma / Fracture</option>
+                <option value="High-Risk Pregnancy / Labour">👶 Pregnancy / Neonatal Emergency</option>
+                <option value="General Acute Emergency">⚡ Other Acute Medical Emergency</option>
+              </select>
+            </div>
+
+            <!-- Urgency Level Selection -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Triage Urgency *</label>
+              <div class="grid grid-cols-3 gap-2">
+                <label class="p-2 rounded-xl border border-slate-800 bg-slate-950 hover:bg-slate-900 cursor-pointer text-center transition">
+                  <input type="radio" name="severity" value="CRITICAL" checked class="text-rose-600 focus:ring-rose-500 mb-0.5">
+                  <div class="text-xs font-bold text-rose-400">CRITICAL</div>
+                  <div class="text-[9px] text-slate-400">Mobile ICU</div>
+                </label>
+                <label class="p-2 rounded-xl border border-slate-800 bg-slate-950 hover:bg-slate-900 cursor-pointer text-center transition">
+                  <input type="radio" name="severity" value="HIGH" class="text-amber-500 focus:ring-amber-500 mb-0.5">
+                  <div class="text-xs font-bold text-amber-400">URGENT</div>
+                  <div class="text-[9px] text-slate-400">Rapid BLS</div>
+                </label>
+                <label class="p-2 rounded-xl border border-slate-800 bg-slate-950 hover:bg-slate-900 cursor-pointer text-center transition">
+                  <input type="radio" name="severity" value="STANDARD" class="text-blue-500 focus:ring-blue-500 mb-0.5">
+                  <div class="text-xs font-bold text-blue-400">TRANSFER</div>
+                  <div class="text-[9px] text-slate-400">Standard</div>
+                </label>
+              </div>
+            </div>
+
+            <!-- Optional Collapsible Medical Vitals & Billing (Tucked away to keep UI clean) -->
+            <details class="rounded-xl border border-slate-800/80 bg-slate-950/60 p-2.5 text-xs">
+              <summary class="font-semibold text-slate-400 hover:text-slate-200 cursor-pointer flex items-center justify-between select-none">
+                <span class="flex items-center space-x-1.5">
+                  <span>🩺</span>
+                  <span>Optional Vitals & Billing</span>
+                </span>
+                <span class="text-cyan-400 text-[10px]">Add Details +</span>
+              </summary>
+              <div class="space-y-3 mt-3 pt-3 border-t border-slate-800">
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="block text-[10px] text-slate-400 mb-0.5">Blood Group</label>
+                    <select id="bloodGroup" class="w-full px-2 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-white text-xs">
+                      <option value="Unknown">Unknown</option>
+                      <option value="O+">O+</option>
+                      <option value="O-">O-</option>
+                      <option value="A+">A+</option>
+                      <option value="B+">B+</option>
+                      <option value="AB+">AB+</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-[10px] text-slate-400 mb-0.5">Estimated SpO2 (%)</label>
+                    <input type="number" id="vitalSpo2" min="50" max="100" placeholder="e.g. 96" class="w-full px-2 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-white text-xs">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] text-slate-400 mb-0.5">Pulse Rate (BPM)</label>
+                    <input type="number" id="vitalPulse" min="30" max="220" placeholder="e.g. 84" class="w-full px-2 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-white text-xs">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] text-slate-400 mb-0.5">Consciousness</label>
+                    <select id="vitalConscious" class="w-full px-2 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-white text-xs">
+                      <option value="Alert">Alert</option>
+                      <option value="Drowsy">Drowsy</option>
+                      <option value="Unresponsive">Unresponsive</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-[10px] text-slate-400 mb-0.5">Billing Scheme</label>
+                  <select id="billingScheme" class="w-full px-2 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-white text-xs">
+                    <option value="PulseCare Corporate Priority Member">PulseCare Corporate Priority Member (Cashless)</option>
+                    <option value="Cashless Private TPA / Star Health / HDFC Ergo">Private TPA (Star Health, HDFC Ergo, ICICI)</option>
+                    <option value="Direct Hospital Billing / UPI">Direct Hospital Billing / Credit Card / UPI</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block text-[10px] text-slate-400 mb-0.5">Access Notes / Floor</label>
+                  <input type="text" id="patientNotes" placeholder="e.g. 4th floor, elevator working" class="w-full px-2 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-white text-xs">
+                </div>
+              </div>
+            </details>
+
+            <!-- Submit Button -->
+            <button type="submit" class="w-full py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs sm:text-sm shadow-lg shadow-rose-600/25 hover:shadow-rose-600/35 transition flex items-center justify-center space-x-2 cursor-pointer">
+              <span>🚨</span>
+              <span>Confirm & Dispatch Ambulance</span>
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN: STREAMLINED LIVE TELEMETRY TRACKER (7 Cols) -->
+      <div id="trackingSection" class="lg:col-span-7 space-y-5">
+
+        <!-- SEARCH ACTIVE BOOKINGS -->
+        <div class="bg-slate-900/90 border border-slate-800/90 rounded-2xl p-3.5 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div class="flex items-center space-x-2">
+            <span class="text-sm">📡</span>
+            <span class="text-xs font-bold text-white">Live Telemetry & Booking Tracker</span>
+          </div>
+
+          <!-- Lookup by Booking ID -->
+          <div class="flex items-center space-x-2 w-full sm:w-auto">
+            <input type="text" id="trackInputId" placeholder="Booking ID (e.g. PULSE-REQ-8801)" class="px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-white text-xs font-mono placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-rose-500 w-full sm:w-52">
+            <button onclick="patientApp.trackBooking(document.getElementById('trackInputId').value.trim())" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold border border-slate-700 transition cursor-pointer">
+              Track
+            </button>
+          </div>
+        </div>
+
+        <!-- DYNAMIC TRACKING CONTENT CONTAINER (Populated by patient.js) -->
+        <div id="trackingContent" class="space-y-4">
+          <!-- Populated dynamically with booking status, officer attribution card, ambulance details -->
+        </div>
+
+        <!-- LIVE GPS FLEET ROUTE RADAR MAP WITH WEATHER TELEMETRY -->
+        <div class="bg-slate-900/90 border border-slate-800/90 rounded-2xl p-4 shadow-xl space-y-2.5">
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <div class="flex items-center space-x-2">
+              <span class="text-rose-400">🗺️</span>
+              <h3 class="text-xs font-bold text-white uppercase tracking-wider">Live Route Radar</h3>
+            </div>
+
+            <div class="flex items-center space-x-2 flex-wrap">
+              <!-- Live Transit Weather Pill -->
+              <div id="patientWeatherPill" class="hidden sm:inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-lg bg-slate-800/90 border border-slate-700 text-slate-300 text-xs font-mono">
+                <span id="patientWeatherIcon">⛅</span>
+                <span id="patientWeatherTemp" class="font-bold text-cyan-400">--°C</span>
+                <span id="patientWeatherDesc" class="text-[11px] text-slate-400">Clear</span>
+              </div>
+
+              <!-- Precipitation Radar Toggle Button -->
+              <button id="btnPatientRadarToggle" onclick="patientApp.toggleRadarOverlay()" class="px-2.5 py-1 rounded-lg text-xs font-semibold border border-slate-700 bg-slate-800 text-slate-300 hover:text-white hover:border-cyan-500 transition-all flex items-center space-x-1 shadow-sm">
+                <span class="radar-live-dot hidden" id="patientRadarDot"></span>
+                <span>🌧️ Radar</span>
+                <span id="patientRadarState" class="text-[10px] text-slate-400 font-mono">OFF</span>
+              </button>
+
+              <div id="liveEtaDisplay" class="text-xs font-mono font-bold text-cyan-400 bg-cyan-950/60 border border-cyan-500/30 px-2.5 py-1 rounded-lg">
+                Telemetry Standby
+              </div>
+            </div>
+          </div>
+
+          <!-- Map Div -->
+          <div class="relative w-full h-72 rounded-xl overflow-hidden border border-slate-800 bg-slate-950 z-0">
+            <div id="patientTrackingMap" class="w-full h-full"></div>
+
+            <!-- Floating Weather & Road Condition HUD on Patient Map -->
+            <div id="patientMapWeatherHud" class="weather-map-hud absolute top-2 right-2 z-[400] p-2.5 rounded-xl max-w-[240px] text-xs space-y-1 pointer-events-auto hidden shadow-xl">
+              <div class="flex items-center justify-between text-[10px] border-b border-slate-700/60 pb-1">
+                <span class="font-bold text-cyan-400 flex items-center space-x-1">
+                  <span>🌦️ ROUTE WEATHER</span>
+                </span>
+                <span id="patientHudCity" class="font-mono text-slate-400 uppercase">DELHI</span>
+              </div>
+              <div class="flex items-center justify-between pt-0.5">
+                <span id="patientHudTemp" class="font-bold text-white text-xs">--°C ⛅</span>
+                <span id="patientHudRoadBadge" class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-semibold border border-emerald-500/30">Roads Dry</span>
+              </div>
+              <p id="patientHudAdvisory" class="text-[10px] text-slate-300 leading-tight">
+                Standard transit conditions. Normal emergency speed permitted.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between text-[11px] text-slate-400 pt-0.5">
+            <div class="flex items-center space-x-3">
+              <span class="flex items-center space-x-1"><span class="text-rose-500">🚨</span> Pickup</span>
+              <span class="flex items-center space-x-1"><span class="text-cyan-400">🚑</span> Ambulance</span>
+              <span class="flex items-center space-x-1"><span class="text-emerald-400">🏥</span> Hospital</span>
+            </div>
+            <span class="text-[10px] text-slate-500">Live GPS & Weather Telemetry</span>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- OFFICIAL BOOKING CONFIRMATION RECEIPT MODAL (CLEAN & PRINTABLE) -->
+  <!-- ========================================================================= -->
+  <dialog id="bookingReceiptModal" class="p-0 rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl text-slate-100 max-w-xl w-full backdrop:bg-slate-950/80">
+    <div class="p-6 space-y-4">
+      
+      <!-- Top Modal Bar (Excluded from Print) -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800 no-print">
+        <div class="flex items-center space-x-2">
+          <span class="text-lg">🧾</span>
+          <h3 class="text-sm font-bold text-white">Emergency Booking Confirmation Receipt</h3>
+        </div>
+        <button onclick="document.getElementById('bookingReceiptModal').close()" class="text-slate-400 hover:text-white text-2xl leading-none cursor-pointer">&times;</button>
+      </div>
+
+      <!-- PRINTABLE RECEIPT CONTENT CONTAINER -->
+      <div id="receiptContentToPrint" class="space-y-4">
+        <!-- Injected dynamically by patientApp.openBookingReceipt() -->
+      </div>
+
+      <!-- Modal Footer Actions (Excluded from Print) -->
+      <div class="pt-4 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2 no-print">
+        <div class="flex items-center space-x-2">
+          <button onclick="patientApp.printReceipt()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white border border-slate-700 transition flex items-center space-x-1.5 cursor-pointer">
+            <span>🖨️</span>
+            <span>Print / Save PDF</span>
+          </button>
+          <button onclick="patientApp.shareReceiptWhatsApp()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-bold text-white transition flex items-center space-x-1.5 cursor-pointer">
+            <span>📲</span>
+            <span>Share WhatsApp</span>
+          </button>
+        </div>
+        <button onclick="document.getElementById('bookingReceiptModal').close()" class="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-xs font-bold text-white transition cursor-pointer">
+          Close & View Tracker
+        </button>
+      </div>
+
+    </div>
+  </dialog>
+
+  <!-- CORPORATE FOOTER -->
+  <footer class="mt-auto border-t border-slate-800/80 bg-[#090d16] px-6 py-4 text-xs text-slate-400">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px]">
+      <div class="flex items-center space-x-2">
+        <div class="w-6 h-6 rounded-lg bg-rose-600 flex items-center justify-center text-white font-bold text-xs">
+          ✚
+        </div>
+        <span class="font-bold text-white">PulseCare India Private Limited</span>
+        <span class="text-slate-500">• Private Critical Care Fleet</span>
+      </div>
+
+      <div class="text-slate-400">
+        Helpline: <a href="tel:18002009110" class="text-rose-400 font-bold font-mono">+91 1800-200-9110</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Leaflet Map JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <!-- Shared Engine (State, Auth, Audio Chime) -->
+  <script src="shared.js"></script>
+
+  <!-- Patient Portal Controller -->
+  <script src="patient.js"></script>
+
+</body>
+</html>
